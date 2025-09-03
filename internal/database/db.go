@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -11,10 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
 func ConnectionDatabase() *gorm.DB {
-	fmt.Println("Reach in db connection...")
 	host := os.Getenv("DB_HOST")
 	port, _ := strconv.Atoi(os.Getenv("DB_PORT"))
 	user := os.Getenv("DB_USER")
@@ -32,9 +30,13 @@ func ConnectionDatabase() *gorm.DB {
 	if err := AutoMigrate(db); err != nil {
 		fmt.Println("Failed to migrate schema: ", err)
 	}
+	if db == nil {
+		log.Fatal("db is nil til connection")
+	} else {
+		fmt.Println("Database connection is success!")
+	}
 
-	DB := db
-	return DB
+	return db
 }
 
 func AutoMigrate(db *gorm.DB) error {

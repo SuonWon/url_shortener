@@ -2,7 +2,9 @@ package user_repo
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/google/uuid"
 	schema "github.com/url_shortener/internal/models"
 	"gorm.io/gorm"
 )
@@ -25,18 +27,36 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 
 // Create implements UserRepository.
 func (u *userRepo) Create(context context.Context, user *schema.User) error {
-	return u.db.WithContext(context).Create(user).Error
+	if err := u.db.WithContext(context).Create(user).Error; err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	return nil
 }
 
 // Delete implements UserRepository.
 func (u *userRepo) Delete(context context.Context, id string) error {
-	return u.db.WithContext(context).Delete(&schema.User{}, id).Error
+
+	userId, err := uuid.Parse(id)
+	if err != nil {
+		// not a valid UUID
+		panic(err)
+	}
+
+	return u.db.WithContext(context).Delete(&schema.User{}, userId).Error
 }
 
 // GetUserById implements UserRepository.
 func (u *userRepo) GetUserById(context context.Context, id string) (*schema.User, error) {
 	var user schema.User
-	if err := u.db.WithContext(context).First(user, id).Error; err != nil {
+
+	userId, err := uuid.Parse(id)
+	if err != nil {
+		// not a valid UUID
+		panic(err)
+	}
+
+	if err := u.db.WithContext(context).First(&user, userId).Error; err != nil {
 		return nil, err
 	}
 

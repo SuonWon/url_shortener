@@ -3,17 +3,20 @@ package user_handler
 import (
 	"context"
 	"net/http"
+	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	schema "github.com/url_shortener/internal/models"
-	user_repo "github.com/url_shortener/internal/repos"
+	repo "github.com/url_shortener/internal/repos"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandler struct {
-	repo      user_repo.UserRepository
+	repo      repo.UserRepository
 	validator *validator.Validate
 }
 
@@ -30,11 +33,12 @@ type CreateUserDTO struct {
 }
 
 type UpdateUserDTO struct {
+	ID    string  `json:"id" validate:"required"`
 	Email *string `json:"email" validate:"required,email"`
 	Name  *string `json:"name" validate:"required,min=2"`
 }
 
-func NewUserService(repo user_repo.UserRepository) *UserHandler {
+func NewUserHandler(repo repo.UserRepository) *UserHandler {
 	return &UserHandler{
 		repo:      repo,
 		validator: validator.New(),
@@ -59,14 +63,14 @@ func Map[T any, R any](in []T, f func(T) R) []R {
 	return out
 }
 
-func (s *UserHandler) Create(context *gin.Context) {
+func (u *UserHandler) Create(context *gin.Context) {
 	var body CreateUserDTO
 	if err := context.ShouldBindJSON(&body); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "invalid json: " + err.Error()})
 		return
 	}
 
-	if err := s.validator.Struct(body); err != nil {
+	if err := u.validator.Struct(body); err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
@@ -74,15 +78,17 @@ func (s *UserHandler) Create(context *gin.Context) {
 	ctx, cancel := withTimeout(context)
 	defer cancel()
 
+	newUUID, _ := exec.Command("uuidgen").Output()
+	hash, _ := HashPasswordBcrypt(body.Password)
 	user := schema.User{
 		Email:    body.Email,
 		Name:     body.Name,
-		Password: body.Password,
-		Salt:     "CDIOEdare",
+		Password: hash,
+		Salt:     strings.TrimSpace(string(newUUID)),
 	}
 
-	if err := s.repo.Create(ctx, &user).Error(); err != "" {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "create failed: " + err})
+	if err := u.repo.Create(ctx, &user); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "create failed: " + err.Error()})
 		return
 	}
 
@@ -140,7 +146,73 @@ func (u *UserHandler) GetUsers(context *gin.Context) {
 	})
 }
 
+func (u *UserHandler) DeleteUser(context *gin.Context) {
+	id := context.Param("id")
+	if id == "" {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	ctx, cancel := withTimeout(context)
+	defer cancel()
+
+	if err := u.repo.Delete(ctx, id); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "create failed: " + err.Error()})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "User deleted successfully!"})
+}
+
+func (u *UserHandler) UpdateUser(context *gin.Context) {
+	var body UpdateUserDTO
+	if err := context.ShouldBindJSON(&body); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "invalid json: " + err.Error()})
+		return
+	}
+
+	if err := u.validator.Struct(body); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	ctx, cancel := withTimeout(context)
+	defer cancel()
+
+	user, err := u.repo.GetUserById(ctx, body.ID)
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if body.Name != nil {
+		user.Name = *body.Name
+	}
+
+	if body.Email != nil {
+		user.Email = *body.Email
+	}
+
+	if err := u.repo.Update(ctx, user); err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"error": "error in updating user"})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "user updated successfully"})
+}
+
 func withTimeout(c *gin.Context) (ctx context.Context, cancel func()) {
 	ctx1, cancel := c.Request.Context(), func() {}
 	return ctx1, cancel
+}
+
+const bcryptCost = 12
+
+func HashPasswordBcrypt(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	return string(hash), err // store this string
+}
+
+func CheckPasswordBcrypt(storedHash, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) == nil
 }

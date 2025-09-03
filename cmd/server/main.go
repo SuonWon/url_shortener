@@ -11,7 +11,9 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/url_shortener/internal/database"
+	handler "github.com/url_shortener/internal/handlers"
 	router "github.com/url_shortener/internal/http"
+	repo "github.com/url_shortener/internal/repos"
 )
 
 func main() {
@@ -19,10 +21,23 @@ func main() {
 		fmt.Println("Environment variable not found")
 	}
 
-	database.ConnectionDatabase()
+	db := database.ConnectionDatabase()
 
+	if db == nil {
+		log.Fatal("db is nil")
+	}
 	port := os.Getenv("PORT")
-	router := router.New()
+
+	userRepo := repo.NewUserRepository(db)
+	userHandler := handler.NewUserHandler(userRepo)
+	router := router.New(userHandler)
+
+	if userRepo == nil {
+		log.Fatal("userRepo is nil")
+	}
+	if userHandler == nil {
+		log.Fatal("userHandler is nil")
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + port,

@@ -9,7 +9,7 @@ import (
 type User struct {
 	Id        uuid.UUID `json:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid();"`
 	Email     string    `json:"email" gorm:"size:50;uniqueIndex;not null"`
-	Password  string    `json:"password" gorm:"size:20;not null"`
+	Password  string    `json:"password" gorm:"size:255;not null"`
 	Name      string    `json:"name" gorm:"size:100;not null"`
 	Salt      string    `json:"salt" gorm:"size:255;not null"`
 	CreatedAt time.Time
