@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func New(userHandler *handlers.UserHandler) *gin.Engine {
+func New(userHandler *handlers.UserHandler, domainHandler *handlers.DomainHandler, linkHandler *handlers.LinkHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(requestLogger())
@@ -27,6 +27,17 @@ func New(userHandler *handlers.UserHandler) *gin.Engine {
 			users.POST("", userHandler.Create)
 			users.DELETE("/:id", userHandler.DeleteUser)
 			users.PUT("", userHandler.UpdateUser)
+		}
+		domains := v1.Group("/domains")
+		{
+			domains.GET("", domainHandler.GetDomains)
+			domains.POST("", domainHandler.Create)
+			domains.GET("/:id", domainHandler.GetDomainById)
+		}
+		links := v1.Group("/links")
+		{
+			links.GET("/:code", linkHandler.RedirectLink)
+			links.POST("", linkHandler.Create)
 		}
 	}
 

@@ -30,14 +30,11 @@ func main() {
 
 	userRepo := repo.NewUserRepository(db)
 	userHandler := handler.NewUserHandler(userRepo)
-	router := router.New(userHandler)
-
-	if userRepo == nil {
-		log.Fatal("userRepo is nil")
-	}
-	if userHandler == nil {
-		log.Fatal("userHandler is nil")
-	}
+	domainRepo := repo.NewDomainRepository(db)
+	domainHandler := handler.NewDomainRepository(domainRepo)
+	linkRepo := repo.NewShortLinkRepository(db)
+	linkHandler := handler.NewLinkHandler(linkRepo, domainRepo)
+	router := router.New(userHandler, domainHandler, linkHandler)
 
 	srv := &http.Server{
 		Addr:              ":" + port,
