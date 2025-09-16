@@ -38,6 +38,7 @@ func New(userHandler *handlers.UserHandler, domainHandler *handlers.DomainHandle
 		{
 			links.GET("/:code", linkHandler.RedirectLink)
 			links.POST("", linkHandler.Create)
+			links.GET("/test", linkHandler.Test)
 		}
 	}
 

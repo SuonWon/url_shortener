@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -89,12 +88,15 @@ func (l LinkHandler) RedirectLink(context *gin.Context) {
 	defer cancel()
 
 	res, err := l.repo.GetLinkByCode(ctx, code)
+
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "url not found!"})
 		return
 	}
-	fmt.Println(res)
-	http.RedirectHandler(res, http.StatusFound)
-	// context.JSON(http.StatusOK, gin.H{"message": res})
-	// http.Redirect(w, r, res, http.StatusPermanentRedirect)
+	http.Redirect(context.Writer, context.Request, res, http.StatusMovedPermanently)
+
+}
+
+func (l LinkHandler) Test(context *gin.Context) {
+	context.JSON(http.StatusOK, gin.H{"message": "Reidrected"})
 }
