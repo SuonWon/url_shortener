@@ -21,6 +21,8 @@ func ConnectionDatabase() *gorm.DB {
 
 	psqlSetup := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Bangkok", host, user, password, dbname, port)
 
+	fmt.Println(psqlSetup)
+
 	db, err := gorm.Open(postgres.Open(psqlSetup), &gorm.Config{})
 
 	if err != nil {

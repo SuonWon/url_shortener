@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 	"github.com/url_shortener/internal/database"
 	handler "github.com/url_shortener/internal/handlers"
 	router "github.com/url_shortener/internal/http"
@@ -17,9 +17,9 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(".env"); err != nil {
-		fmt.Println("Environment variable not found")
-	}
+	// if err := godotenv.Load(".env"); err != nil {
+	// 	fmt.Println("Environment variable not found")
+	// }
 
 	db := database.ConnectionDatabase()
 
