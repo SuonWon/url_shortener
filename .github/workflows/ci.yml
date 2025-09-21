@@ -1,0 +1,39 @@
+name: url_shortener CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+  setps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.0'
+        cache: true
+
+    - name: Download Dependencies
+      run: go mod donwload
+
+    - name: Vet Code
+      run: go vet ./...
+
+    - name: Run Tests
+      run: go test -v ./...
+
+    - name: Test Coverage
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -func=coverage.out
+
+    - name: Build
+      run: go build -v ./...
