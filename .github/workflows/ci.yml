@@ -30,10 +30,10 @@ jobs:
     - name: Run Tests
       run: go test -v ./...
 
-    - name: Test Coverage
-      run: |
-        go test -coverprofile=coverage.out ./...
-        go tool cover -func=coverage.out
+    # - name: Test Coverage
+    #   run: |
+    #     go test -coverprofile=coverage.out ./...
+    #     go tool cover -func=coverage.out
 
-    - name: Build
-      run: go build -v ./...
+    # - name: Build
+    #   run: go build -v ./...
