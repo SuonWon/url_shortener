@@ -22,7 +22,7 @@ jobs:
         cache: true
 
     - name: Download Dependencies
-      run: go mod donwload
+      run: go mod download
 
     - name: Vet Code
       run: go vet ./...
