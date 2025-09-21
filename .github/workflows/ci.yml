@@ -11,8 +11,9 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
 
-  setps:
-    - uses: actions/checkout@v4
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
     - name: Setup Go
       uses: actions/setup-go@v5
